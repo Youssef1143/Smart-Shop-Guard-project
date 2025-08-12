@@ -10,6 +10,7 @@
 #include "oled_display.h"   // OLED display functions
 #include "audio.h"
 #include "blynk_handlers.h"
+#include "voice_commands.h"
 
 #include <DHT.h>
 #include <LiquidCrystal_I2C.h>
@@ -62,6 +63,7 @@ static TaskHandle_t hTaskLCD = nullptr;        // LCD Display Task
 static TaskHandle_t hTaskOLED = nullptr;       // OLED Display Task
 static TaskHandle_t hTaskWiFi = nullptr;       // WiFi & Blynk Task
 static TaskHandle_t hTaskSysMon = nullptr;     // System Monitor Task
+static TaskHandle_t hTaskBT = nullptr;         // Bluetooth Command Task
 
 // 📚 Legacy Function Declarations (FreeRTOS Migration)
 // These functions have been replaced by RTOS task-based architecture
@@ -395,6 +397,9 @@ void setup() {
   // 🌐 Core 0: Network & System Services (Background Priority)
   xTaskCreatePinnedToCore(TaskWiFiBlynk,     "tWiFi",   4096, nullptr, 3, &hTaskWiFi,   0);
   xTaskCreatePinnedToCore(TaskSystemMonitor, "tSysMon", 3072, nullptr, 1, &hTaskSysMon, 0);
+  // Bluetooth on Core 0 as low-impact background task
+  initVoiceCommands();
+  xTaskCreatePinnedToCore(TaskBluetooth,     "tBT",     3072, nullptr, 1, &hTaskBT,     0);
   
   // 📊 System Resource Information
   Serial.printf("💾 Free heap: %d bytes\n", ESP.getFreeHeap());
